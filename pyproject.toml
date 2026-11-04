@@ -1,0 +1,12 @@
+[project]
+name = "pottery-class-review-api"
+version = "0.1.0"
+description = "도자기 원데이 클래스 리뷰와 강사 답글 생성 API"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "fastapi[standard]>=0.162.0",
+]
+
+[tool.fastapi]
+entrypoint = "app.main:app"
