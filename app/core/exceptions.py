@@ -22,6 +22,12 @@ class ReviewNotFoundError(Exception):
         self.review_id = review_id
 
 
+class AiRequestError(Exception):
+    """OpenAI 요청이 실패했을 때 발생하는 사용자 정의 예외."""
+
+    pass
+
+
 def register_exception_handlers(app: FastAPI) -> None:
     """
     사용자 정의 예외 처리기를 FastAPI 앱에 등록한다.
@@ -48,3 +54,20 @@ def register_exception_handlers(app: FastAPI) -> None:
             },
         )
 
+    @app.exception_handler(AiRequestError)
+    def handle_ai_request_error(
+        request: Request,
+        error: AiRequestError,
+    ) -> JSONResponse:
+        """
+        AiRequestError를 502 JSON 응답으로 변환한다.
+        """
+
+        return JSONResponse(
+            status_code=502,
+            content={
+                "code": "ERROR_CODE_00011",
+                "description": "강사 답글 생성 실패",
+                "detail": str(error),
+            },
+        )
