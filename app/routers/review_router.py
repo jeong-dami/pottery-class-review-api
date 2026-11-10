@@ -5,10 +5,16 @@ HTTP 요청을 받아 ReviewService에 전달하고,
 서비스가 반환한 DTO를 응답으로 반환한다.
 """
 
+import threading
+
 from fastapi import APIRouter
 
-from app.dependencies import ReviewServiceDep
-from app.schemas.review import ReviewCreateRequest, ReviewResponse
+from app.dependencies import ReviewServiceDep, ReplyServiceDep
+from app.schemas.review import (
+    ReviewCreateRequest, 
+    ReviewResponse,
+    ReplyResponse,
+)
 
 
 router = APIRouter(
@@ -56,3 +62,28 @@ def find_review(
     """
 
     return service.find_review(review_id)
+
+
+@router.post(
+    "/{review_id}/reply",
+    summary="도자기 클래스 강사 답글 생성",
+)
+async def create_reply(
+    review_id: int,
+    service: ReplyServiceDep,
+) -> ReplyResponse:
+    """
+    저장된 리뷰를 바탕으로 강사 답글 초안을 비동기로 생성한다.
+
+    생성된 답글은 리뷰에 저장되며,
+    리뷰 조회 응답에서도 확인할 수 있다.
+    """
+
+    thread_name = threading.current_thread().name
+
+    print(
+        f"[POST /api/reviews/{review_id}/reply] "
+        f"thread={thread_name}"
+    )
+
+    return await service.create_reply(review_id)
