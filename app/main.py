@@ -5,7 +5,6 @@ FastAPI 앱을 생성하고 리뷰 라우터와
 사용자 정의 예외 처리기를 등록한다.
 """
 
-from app.clients import llm_client
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
