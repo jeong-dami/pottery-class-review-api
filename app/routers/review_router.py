@@ -1,7 +1,7 @@
 """
 도자기 원데이 클래스 리뷰 라우터.
 
-HTTP 요청을 받아 ReviewService에 전달하고,
+HTTP 요청을 받아 ReviewService 또는 ReplyService에 전달하고,
 서비스가 반환한 DTO를 응답으로 반환한다.
 """
 
@@ -11,9 +11,9 @@ from fastapi import APIRouter
 
 from app.dependencies import ReviewServiceDep, ReplyServiceDep
 from app.schemas.review import (
-    ReviewCreateRequest, 
-    ReviewResponse,
     ReplyResponse,
+    ReviewCreateRequest,
+    ReviewResponse,
 )
 
 
@@ -24,7 +24,6 @@ router = APIRouter(
     # Swagger 문서에서 API를 묶어 표시할 이름이다.
     tags=["리뷰"],
 )
-
 
 
 @router.post(
@@ -66,7 +65,7 @@ def find_review(
 
 @router.post(
     "/{review_id}/reply",
-    summary="도자기 클래스 강사 답글 생성",
+    summary="도자기 클래스 비동기 강사 답글 생성",
 )
 async def create_reply(
     review_id: int,
@@ -87,3 +86,28 @@ async def create_reply(
     )
 
     return await service.create_reply(review_id)
+
+
+@router.post(
+    "/{review_id}/reply-sync",
+    summary="도자기 클래스 동기 강사 답글 생성",
+)
+def create_reply_sync(
+    review_id: int,
+    service: ReplyServiceDep,
+) -> ReplyResponse:
+    """
+    저장된 리뷰를 바탕으로 강사 답글 초안을 동기로 생성한다.
+
+    OpenAI 응답이 올 때까지 현재 작업 스레드가 기다리며,
+    생성된 답글은 리뷰에 저장된다.
+    """
+
+    thread_name = threading.current_thread().name
+
+    print(
+        f"[POST /api/reviews/{review_id}/reply-sync] "
+        f"thread={thread_name}"
+    )
+
+    return service.create_reply_sync(review_id)
