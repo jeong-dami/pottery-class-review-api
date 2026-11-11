@@ -1,15 +1,15 @@
 """
 도자기 원데이 클래스 리뷰 API의 의존성 설정.
 
-FastAPI의 Depends를 사용하여 저장소와 서비스 객체를
-라우터의 핸들러에 전달한다.
+FastAPI의 Depends를 사용하여 저장소와 LLM 클라이언트,
+서비스 객체를 라우터의 핸들러에 전달한다.
 """
 
 from typing import Annotated
 
 from fastapi import Depends, Request
 
-from app.clients.llm_client import LlmClient
+from app.clients.llm_client import LlmClient, SyncLlmClient
 from app.repositories.review_repository import ReviewRepository
 from app.services.reply_service import ReplyService
 from app.services.review_service import ReviewService
@@ -33,16 +33,30 @@ def get_review_repository() -> ReviewRepository:
 
 def get_llm_client(request: Request) -> LlmClient:
     """
-    lifespan에서 생성한 LLM 클라이언트를 반환한다.
+    lifespan에서 생성한 비동기 LLM 클라이언트를 반환한다.
 
     Args:
         request (Request): 현재 요청과 FastAPI 앱 정보를 가진 객체
 
     Returns:
-        LlmClient: 실제 또는 가짜 LLM 클라이언트
+        LlmClient: 실제 또는 가짜 비동기 LLM 클라이언트
     """
 
     return request.app.state.llm_client
+
+
+def get_sync_llm_client(request: Request) -> SyncLlmClient:
+    """
+    lifespan에서 생성한 동기 LLM 클라이언트를 반환한다.
+
+    Args:
+        request (Request): 현재 요청과 FastAPI 앱 정보를 가진 객체
+
+    Returns:
+        SyncLlmClient: 실제 또는 가짜 동기 LLM 클라이언트
+    """
+
+    return request.app.state.sync_llm_client
 
 
 def get_review_service(
@@ -73,21 +87,28 @@ def get_reply_service(
         LlmClient,
         Depends(get_llm_client),
     ],
+    sync_llm_client: Annotated[
+        SyncLlmClient,
+        Depends(get_sync_llm_client),
+    ],
 ) -> ReplyService:
     """
-    저장소와 LLM 클라이언트를 주입받아 ReplyService를 생성한다.
+    저장소와 비동기·동기 LLM 클라이언트를 주입받아
+    ReplyService 객체를 생성한다.
 
     Args:
         repository (ReviewRepository): 공통 리뷰 저장소
-        llm_client (LlmClient): 실제 또는 가짜 LLM 클라이언트
+        llm_client (LlmClient): 실제 또는 가짜 비동기 LLM 클라이언트
+        sync_llm_client (SyncLlmClient): 실제 또는 가짜 동기 LLM 클라이언트
 
     Returns:
-        ReplyService: 강사 답글 생성 서비스
+        ReplyService: 비동기 및 동기 강사 답글 생성 서비스
     """
 
     return ReplyService(
         repository,
         llm_client,
+        sync_llm_client,
     )
 
 
